@@ -1,0 +1,46 @@
+{
+  "project_info": {
+    "project_number": "1011545491006",
+    "project_id": "fecipe-internal",
+    "storage_bucket": "fecipe-internal.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:1011545491006:android:325096ed9e1847ca1a336f",
+        "android_client_info": {
+          "package_name": "com.example.fecipe"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "1011545491006-pekvd9o82l8ckcis92hkpncvs4jtk8pu.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDd1TH1QqfnikrOLCoo3LcMJnipzJLmy_M"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "1011545491006-gk3en8s03piepgsqfs0ebp311176u368.apps.googleusercontent.com",
+              "client_type": 3
+            },
+            {
+              "client_id": "1011545491006-loggm4g0q9e138gaj6buf9iu0q6bklcf.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "com.example.fecipe.RunnerTests"
+              }
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

@@ -1,0 +1,499 @@
+Subject: [PATCH] Uncommitted changes before Checkout at 25/08/23, 12:50 pm [Changes]
+---
+Index: lib/shopping_list/shopping_list.dart
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/lib/shopping_list/shopping_list.dart b/lib/shopping_list/shopping_list.dart
+--- a/lib/shopping_list/shopping_list.dart	
++++ b/lib/shopping_list/shopping_list.dart	
+@@ -11,15 +11,19 @@
+   @override
+   State<ShoppingList> createState() => _ShoppingListState();
+ }
+-
++List cachedShoppingList = [];
+ class _ShoppingListState extends State<ShoppingList> {
+-
+-  fetchshoppingList() {
+-    var shoppingList = [];
+-
++  var shoppingList = [];
++  fetchshoppingList() {
++    if (cachedShoppingList.isEmpty) {
++      print("getting new data");
+       BlocProvider.of<ShoppingListBloc>(context)
+           .add(ShoppingListRequested(shoppingList));
+-
++    }
++    else {
++      print("existing data");
++      return cachedShoppingList;
++    }
+   }
+ 
+   @override
+@@ -76,8 +80,7 @@
+                                             MediaQuery.of(context).size.width *
+                                                 0.5,
+                                         child: Text(
+-                                          "${index + 1}. " +
+-                                              state.shoppingList[index].name,
++                                          "${index + 1}. " + state.shoppingList[index].name,
+                                           overflow: TextOverflow.ellipsis,
+                                           style: Theme.of(context)
+                                               .textTheme
+@@ -123,7 +126,7 @@
+                       margin: EdgeInsets.only(
+                           top: MediaQuery.of(context).size.height * 0.4),
+                       alignment: Alignment.center,
+-                      child: const Text("Shopping list empty."))
++                      child: const Text("Shopping list empty.",style: TextStyle(color: Color(0xff848484)),))
+                   : Container(
+                       margin: EdgeInsets.only(
+                           top: MediaQuery.of(context).size.height * 0.4),
+Index: lib/favourites/favourites.dart
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/lib/favourites/favourites.dart b/lib/favourites/favourites.dart
+--- a/lib/favourites/favourites.dart	
++++ b/lib/favourites/favourites.dart	
+@@ -9,29 +9,48 @@
+   State<Favourites> createState() => _FavouritesState();
+ }
+ 
++List cachedFavourites = [];
++
+ class _FavouritesState extends State<Favourites> {
+   Future<dynamic> favourites = Future.value();
+   RecipeDataRepository repo = RecipeDataRepository();
+   var isLoading = true;
+ 
+   fetchFavourites() async {
+-    var favouritesList =
+-        await repo.getFavourtieRecipeInfo(await repo.getFavouritesFromDb());
+-    if (favouritesList.isNotEmpty) {
+-      favourites = Future.value(favouritesList);
+-    } else {
+-      favourites = Future.value();
+-    }
+-    setState(() {
+-      isLoading = false;
+-    });
+-  }
++    var favouritesList = [];
++    if(cachedFavourites.isEmpty){
++      favouritesList =
++      await repo.getFavourtieRecipeInfo(await repo.getFavouritesFromDb());
++      cachedFavourites = favouritesList;
++      if (favouritesList.isNotEmpty) {
++        favourites = Future.value(favouritesList);
++      } else {
++        favourites = Future.value();
++      }
++      setState(() {
++        isLoading = false;
++      });
++    }
++    else if(cachedFavourites.isNotEmpty){
++      favouritesList = cachedFavourites;
++      if (favouritesList.isNotEmpty) {
++        favourites = Future.value(favouritesList);
++      } else {
++        favourites = Future.value();
++      }
++      setState(() {
++        isLoading = false;
++      });
++    }
+ 
++  }
++
+   removeFromFavourites(recipeId) async {
+     setState(() {
+       isLoading = true;
+     });
+     await repo.deleteFavListDoc(recipeId);
++    cachedFavourites = [];
+     await fetchFavourites();
+   }
+ 
+@@ -45,7 +64,7 @@
+   Widget build(BuildContext context) {
+     return Scaffold(
+       appBar: AppBar(
+-        title: const Center(child: Text('Favourites')),
++        title: const Center(child: Text('Favourites',style: TextStyle(color: Colors.white),)),
+       ),
+       body: SingleChildScrollView(
+         child: FutureBuilder(
+@@ -155,7 +174,6 @@
+                         child: const Text(
+                           'No results',
+                           style: TextStyle(
+-                              fontFamily: 'Avenir',
+                               fontSize: 22,
+                               color: Color(0xff848484)),
+                         ))),
+Index: lib/search/search.dart
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/lib/search/search.dart b/lib/search/search.dart
+--- a/lib/search/search.dart	
++++ b/lib/search/search.dart	
+@@ -6,7 +6,6 @@
+ import 'package:get/get.dart';
+ import 'package:shared_preferences/shared_preferences.dart';
+ 
+-import '/userpreferences/user_preferences.dart';
+ import '../data_models/usermodel.dart';
+ import '../repository/recipedata_repository.dart';
+ import '/recipedescription/recipe_description.dart';
+@@ -20,6 +19,11 @@
+   State<Search> createState() => _SearchState();
+ }
+ 
++//glob
++List cachedPopularList = [];
++List cachedRecommendedList = [];
++int _selectedIndex = 0;
++
+ class _SearchState extends State<Search> {
+   final search = TextEditingController();
+   RecipeDataRepository repo = RecipeDataRepository();
+@@ -33,7 +37,7 @@
+   bool isRecommendedRecipeLoading = false;
+   bool isPopularRecipeLoading = false;
+   bool isSearchResultsLoading = false;
+-  int _selectedIndex = 0;
++
+   String searchValue = '';
+   bool isPreferences = false;
+   bool isSearchActive = false;
+@@ -70,18 +74,26 @@
+     setState(() {});
+   }
+ 
+-  getDataForCarousel()async{
++  getDataForCarousel() async {
+     carousalData = await repo.getCarouselData();
+-
+   }
+ 
+   fetchRecommendedData([value = '']) async {
++    List recipes = [];
+     futureRecommended = Future.value();
+     setState(() {
+       isRecommendedRecipeLoading = true;
+     });
+-    List recipes = await repo.getMealsListBySearch(
+-        type[_selectedIndex], value, 'recommended', isPreferences);
++    if (cachedRecommendedList.isEmpty) {
++      print("getting recommended data");
++      recipes = await repo.getMealsListBySearch(
++          type[_selectedIndex], value, 'recommended', isPreferences);
++      cachedRecommendedList = recipes;
++    } else {
++      print("using existing recommended data");
++      recipes = cachedRecommendedList;
++    }
++
+     if (recipes.isNotEmpty) {
+       futureRecommended = Future.value(recipes);
+     }
+@@ -91,12 +103,23 @@
+   }
+ 
+   fetchPopularData([value = '']) async {
++    List popularRecipes = [];
+     futurePopular = Future.value();
+     setState(() {
+       isPopularRecipeLoading = true;
+     });
+-    List popularRecipes = await repo.getMealsListBySearch(
+-        type[_selectedIndex], value, 'popular', isPreferences);
++    if(cachedPopularList.isEmpty) {
++      print("getting popular data");
++      popularRecipes = await repo.getMealsListBySearch(
++          type[_selectedIndex], value, 'popular', isPreferences);
++      cachedPopularList = popularRecipes;
++
++    }
++    else{
++      print("using existing data");
++      popularRecipes = cachedPopularList;
++    }
++
+     if (popularRecipes.isNotEmpty) {
+       futurePopular = Future.value(popularRecipes);
+     }
+@@ -138,6 +161,8 @@
+   onTabSwitch(index) async {
+     setState(() {
+       _selectedIndex = index;
++      cachedRecommendedList = [];
++      cachedPopularList = [];
+     });
+     if (isSearchActive) {
+       handleSearch(searchValue);
+@@ -215,8 +240,9 @@
+                           onChanged: (value) async {
+                             if (value.isNotEmpty) {
+                               handleSearch(value);
+-                            } else{
+-                              final SharedPreferences prefs = await SharedPreferences.getInstance();
++                            } else {
++                              final SharedPreferences prefs =
++                                  await SharedPreferences.getInstance();
+                               setState(() {
+                                 prefs.setString("searchFilters", '');
+                                 isSearchActive = false;
+@@ -305,71 +331,25 @@
+                                                                 .size
+                                                                 .height *
+                                                             0.1,
+-                                                        child:
+-                                                             AutoSizeText(
+-                                                              carousalData[index].title,
++                                                        child: AutoSizeText(
++                                                          carousalData[index]
++                                                              .title,
+                                                           maxFontSize: 26,
+                                                           minFontSize: 14,
+                                                           maxLines: 4,
+-                                                          style: const TextStyle(
++                                                          style:
++                                                              const TextStyle(
+                                                             color: Colors.white,
+                                                           ),
+                                                         ),
+                                                       ),
+                                                     ),
+                                                     const Spacer(),
+-                                                    index==0?SizedBox():SizedBox(
+-                                                      height:
+-                                                          MediaQuery.of(context)
+-                                                                  .size
+-                                                                  .height *
+-                                                              0.059,
+-                                                      child: TextButton(
+-                                                        onPressed: () {
+-
+-                                                          if(index==1){
+-                                                            // Get.to(MealP)
+-                                                          }
+-                                                          else if(index==2){
+-                                                            Get.to(const ShoppingList());
+-                                                          }
+-                                                        },
+-                                                        child: Row(
+-                                                          children: [
+-                                                            const AutoSizeText(
+-                                                              "Let's Try",
+-                                                              style: TextStyle(
+-                                                                  color: Colors
+-                                                                      .amberAccent,
+-                                                                  fontWeight:
+-                                                                      FontWeight
+-                                                                          .bold),
+-                                                              maxFontSize: 26,
+-                                                              minFontSize: 20,
+-                                                            ),
+-                                                            SizedBox(
+-                                                              width: MediaQuery.of(
+-                                                                          context)
+-                                                                      .size
+-                                                                      .width *
+-                                                                  0.02,
+-                                                            ),
+-                                                            const Icon(
+-                                                              Icons
+-                                                                  .arrow_forward_rounded,
+-                                                              color:
+-                                                                  Colors.yellow,
+-                                                              size: 28,
+-                                                            )
+-                                                          ],
+-                                                        ),
+-                                                      ),
+-                                                    ),
+                                                   ],
+                                                 ),
+                                                 const Spacer(),
+                                                 Image.asset(
+-                                                 carousalData[index].image,
++                                                  carousalData[index].image,
+                                                   width: MediaQuery.of(context)
+                                                           .size
+                                                           .width *
+@@ -435,25 +415,18 @@
+                                 ),
+                                 SizedBox(
+                                     child: Column(children: [
+-                                  Padding(
+-                                    padding: const EdgeInsets.only(
++                                  const Padding(
++                                    padding: EdgeInsets.only(
+                                         left: 10.0, top: 10, right: 10),
+                                     child: Row(
+                                       children: [
+-                                        const Text(
++                                        Text(
+                                           "Recommended Recipes",
+                                           style: TextStyle(
+                                               fontWeight: FontWeight.bold,
+                                               fontSize: 18),
+                                         ),
+-                                        const Spacer(),
+-                                        TextButton(
+-                                          onPressed: () {},
+-                                          child: const Text(
+-                                            "View all",
+-                                            style: TextStyle(fontSize: 18),
+-                                          ),
+-                                        ),
++
+                                       ],
+                                     ),
+                                   ),
+@@ -490,24 +463,16 @@
+                                                       color: Color(0xff848484)),
+                                                 )),
+                                   ),
+-                                  Padding(
+-                                    padding: const EdgeInsets.all(10.0),
++                                  const Padding(
++                                    padding: EdgeInsets.all(10.0),
+                                     child: Row(
+                                       children: [
+-                                        const Text(
++                                        Text(
+                                           "Popular Recipes",
+                                           style: TextStyle(
+                                               fontWeight: FontWeight.bold,
+                                               fontSize: 18),
+                                         ),
+-                                        const Spacer(),
+-                                        TextButton(
+-                                          onPressed: () {},
+-                                          child: const Text(
+-                                            "View all",
+-                                            style: TextStyle(fontSize: 18),
+-                                          ),
+-                                        ),
+                                       ],
+                                     ),
+                                   ),
+@@ -586,7 +551,6 @@
+                     child: const Text(
+                       'No results',
+                       style: TextStyle(
+-                          fontFamily: 'Avenir',
+                           fontSize: 22,
+                           color: Color(0xff848484)),
+                     )));
+Index: lib/recipedescription/recipe_description.dart
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/lib/recipedescription/recipe_description.dart b/lib/recipedescription/recipe_description.dart
+--- a/lib/recipedescription/recipe_description.dart	
++++ b/lib/recipedescription/recipe_description.dart	
+@@ -1,3 +1,4 @@
++import 'package:fecipe/favourites/favourites.dart';
+ import 'package:fecipe/recipedescription/bloc/recipe_description_bloc.dart';
+ import 'package:fecipe/recipedescription/bloc/recipe_description_events.dart';
+ import 'package:fecipe/recipedescription/bloc/recipe_description_states.dart';
+@@ -44,6 +45,8 @@
+   }
+ 
+   onPressFavIcon() async {
++    //temp
++    cachedFavourites = [];
+     if (!favsList.contains(recipeId.toString())) {
+       favsList.add(recipeId.toString());
+     }
+@@ -59,12 +62,7 @@
+     await checkFavourite();
+   }
+ 
+-  checkForTags(
+-    veganStatus,
+-  ) {
+-    String Tags = "";
+-    bool vegan = veganStatus;
+-  }
++
+ 
+   @override
+   void initState() {
+Index: lib/shopping_list/bloc/shoppinglist_bloc.dart
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/lib/shopping_list/bloc/shoppinglist_bloc.dart b/lib/shopping_list/bloc/shoppinglist_bloc.dart
+--- a/lib/shopping_list/bloc/shoppinglist_bloc.dart	
++++ b/lib/shopping_list/bloc/shoppinglist_bloc.dart	
+@@ -16,6 +16,7 @@
+         emit(ShoppingListEmpty());
+       }
+       else{
++        cachedShoppingList = event.shoppingList;
+         emit(ShoppingListLoaded(event.shoppingList));
+       }
+ 
+@@ -29,11 +30,9 @@
+         await repo.storeShoppingList(
+             event.shoppingList, "Ingredient removed from the Shopping list");
+         var refreshed = await repo.getShoppingListFromDb();
+-        print("after delete: "+refreshed.toString());
++        cachedShoppingList = refreshed;
+         add(ShoppingListRequested(refreshed));
+ 
+-      } else {
+-        print("false");
+       }
+     });
+   }
+Index: lib/recipedescription/ingredients.dart
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/lib/recipedescription/ingredients.dart b/lib/recipedescription/ingredients.dart
+--- a/lib/recipedescription/ingredients.dart	
++++ b/lib/recipedescription/ingredients.dart	
+@@ -1,3 +1,4 @@
++import 'package:fecipe/shopping_list/shopping_list.dart';
+ import 'package:flutter/material.dart';
+ import 'package:flutter_bloc/flutter_bloc.dart';
+ 
+@@ -140,6 +141,7 @@
+               ),
+               onPressed: () {
+                 addToShoppingList(shoppingList);
++                cachedShoppingList = [];
+               }),
+         )
+       ],
+Index: lib/repository/api.dart
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/lib/repository/api.dart b/lib/repository/api.dart
+--- a/lib/repository/api.dart	
++++ b/lib/repository/api.dart	
+@@ -1,4 +1,4 @@
+ class ApiRepository {
+-  Map<String, String> api = {"apikey": "IAqwSRpLjhXTBhxkVEVI84qUAODMuL8D"};
++  Map<String, String> api = {"apikey": "jFOG6UClnezx3RQmfc155TNnco0q3TMD"};
+   String url = "https://api.apilayer.com/spoonacular/recipes/";
+ }

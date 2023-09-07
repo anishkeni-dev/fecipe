@@ -1,0 +1,16 @@
+{
+  "Slides": [
+    {
+      "title": "Nourishing Delights: Wholesome Recipes Aligned with Your Palate, Health, and Nutrition Goals.",
+      "image": "asset/images/recipe.png"
+    },
+    {
+      "title": "Effortless Nutrition: Plan Your Weekly Meals for Optimal Health and Efficiency.",
+      "image": "asset/images/schedule.png"
+    },
+    {
+      "title": "From Pantry to Plate: Instantly Update Your Shopping List for Effortless Cooking.",
+      "image": "asset/images/shoppinglist.png"
+    }
+  ]
+}
